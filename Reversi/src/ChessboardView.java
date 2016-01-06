@@ -1,8 +1,12 @@
 import javax.swing.*;
+
+import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
 
-public class ChessboardView extends JFrame {
+
+public class ChessboardView extends JFrame implements ActionListener {
 	
 	/**
 	 * 
@@ -20,10 +24,10 @@ public class ChessboardView extends JFrame {
 				chess[i][j] = 0;
 			}
 		}
-		chess[3][3] = -1;
-		chess[4][4] = -1;
-		chess[3][4] = 1;
-		chess[4][3] = 1;
+		chess[3][3] = 1;
+		chess[4][4] = 1;
+		chess[3][4] = -1;
+		chess[4][3] = -1;
 		blackCount = 2;
 		whiteCount = 2;
 		sideState = 1;
@@ -178,6 +182,19 @@ public class ChessboardView extends JFrame {
 	public static int sideState = 0;	// 1 for white, -1 for black, 0 for nil
 	
 	//view component
+	private JMenuBar bar;
+	private JMenu mainMenu;
+	private JMenu mainMenuStart;
+	private JMenu mainMenuStartWithAI;
+	private JMenuItem mainMenuStartWithAIEasy;
+	private JMenuItem mainMenuStartWithAINormal;
+	private JMenuItem mainMenuStartWithAIHard;
+	private JMenuItem mainMenuStartWithPeople;
+	private JMenuItem mainMenuRestart;
+	private JMenuItem mainMenuUndo;
+	private JMenuItem mainMenuQuit;
+	private JMenu aboutMenu;
+	private JMenuItem aboutAuthor;
 	private JPanel pTop;
 	private JPanel pCenter;
 	private JPanel pLeft;
@@ -188,40 +205,113 @@ public class ChessboardView extends JFrame {
 	private JLabel countLabelForWhite;
 	private JLabel whichSideLabel;
 	private JLabel winLabel;
-	private JButton restartButton;
+	private ChessBoardListener chessboardListener;
+	private ReversiAI rai;
+	private int AISide;
+	private Boolean isNeedAI;
+	
+	private void setGameState(int searchDep) {
+		this.removeMouseListener(this.chessboardListener);
+		this.mainMenuRestart.setEnabled(true);
+		this.rai.setColor(AISide);
+		this.rai.setSearchDep(searchDep);
+		this.chessboardListener.setNeedAI(isNeedAI);
+		this.chessboardListener.setReversiAI(rai);
+		this.chessboardListener.setChessboardView(this);
+		this.addMouseListener(this.chessboardListener);
+		winLabel.setText("");
+		gameStart();
+	}
 	
 	public ChessboardView() {
 		
 		this.setBounds(initX, initY, initWidth, initHeight);
 		this.setLayout(null);
 		
+		//member variables
+		chessboardListener = new ChessBoardListener();
+		rai = new ReversiAI();
+		
+		//menubar
+		bar = new JMenuBar();
+		//--main menu
+		mainMenu = new JMenu("Menu");
+		//----start
+		mainMenuStart = new JMenu("start");
+		//------ai
+		mainMenuStartWithAI = new JMenu("AI");
+		//--------easy
+		mainMenuStartWithAIEasy = new JMenuItem("Easy");
+		mainMenuStartWithAIEasy.addActionListener(this);
+		mainMenuStartWithAI.add(mainMenuStartWithAIEasy);
+		//--------normal
+		mainMenuStartWithAINormal = new JMenuItem("Normal");
+		mainMenuStartWithAINormal.addActionListener(this);
+		mainMenuStartWithAI.add(mainMenuStartWithAINormal);
+		//--------hard
+		mainMenuStartWithAIHard = new JMenuItem("Hard");
+		mainMenuStartWithAIHard.addActionListener(this);
+		mainMenuStartWithAI.add(mainMenuStartWithAIHard);
+		mainMenuStart.add(mainMenuStartWithAI);
+		//------all war
+		mainMenuStartWithPeople = new JMenuItem("all war");
+		mainMenuStartWithPeople.addActionListener(this);
+		mainMenuStart.add(mainMenuStartWithPeople);
+		mainMenu.add(mainMenuStart);
+		//----restart
+		mainMenuRestart = new JMenuItem("restart");
+		mainMenuRestart.setEnabled(false);
+		mainMenuRestart.addActionListener(this);
+		mainMenuRestart.setAccelerator(KeyStroke.getKeyStroke("F8"));
+		mainMenu.add(mainMenuRestart);
+		//----undo
+		mainMenuUndo = new JMenuItem("undo");
+		mainMenuUndo.setEnabled(false);
+		mainMenuUndo.addActionListener(this);
+		mainMenuUndo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z,InputEvent.CTRL_MASK));
+		mainMenu.add(mainMenuUndo);
+		//----seqarator
+		mainMenu.addSeparator();
+		//----quit
+		mainMenuQuit = new JMenuItem("quit");
+		mainMenuQuit.addActionListener(this);
+		mainMenu.add(mainMenuQuit);
+		bar.add(mainMenu);
+		//--about
+		aboutMenu = new JMenu("About");
+		//--aboutAuthor
+		aboutAuthor = new JMenuItem("about Author");
+		aboutAuthor.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				 JOptionPane.showMessageDialog(null,"KYZ & CraZYuan\n@ 2015-2016 all rights reserved.", "about Author", JOptionPane.INFORMATION_MESSAGE, authorIcon);
+			}
+		});
+		aboutMenu.add(aboutAuthor);
+		bar.add(aboutMenu);
+		this.setJMenuBar(bar);
+		
+		//background
+		JLabel backLabel = new JLabel(background);
+		backLabel.setBounds(0, 0, initWidth, initHeight);
+		this.getLayeredPane().add(backLabel, new Integer(Integer.MIN_VALUE));
+		JPanel jpTop = (JPanel) this.getContentPane();
+		jpTop.setOpaque(false);
 		//top rol
 		pTop = new JPanel();
 		pTop.setBounds(300, 0, initWidth-300, boardY-10);
-		pTop.setBackground(Color.white);
+		pTop.setOpaque(false);
 		Font winLabelFont = new Font("Arial", Font.BOLD, 30);
 		winLabel = new JLabel("", JLabel.CENTER);
 		winLabel.setBounds(initWidth/2-100, boardY/2-30, 200, 60);
 		winLabel.setFont(winLabelFont);
 		pTop.add(winLabel);
-		restartButton = new JButton("restart");
-		restartButton.addActionListener(
-			new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					clear();
-					winLabel.setText("");
-					gameStart();
-				}
-		});
-		restartButton.setBounds(initWidth-200, boardY/2-30, 100, 30);
-		pTop.add(restartButton);
 		this.add(pTop);
 		
 		//center board
 		pCenter = new JPanel();
 		pCenter.setBounds(boardX, boardY, boardWidth, boardHeight);
-		pCenter.setBackground(Color.black);
+		pCenter.setOpaque(false);
 		pCenter.setLayout(new GridLayout(8,8));
 		for(int i=0; i < 8; i++) {
 			for(int j=0; j<8; j++) {
@@ -236,7 +326,7 @@ public class ChessboardView extends JFrame {
 		//left col
 		pLeft = new JPanel();
 		pLeft.setBounds(0, 0, 300, initHeight);
-		pLeft.setBackground(Color.white);
+		pLeft.setOpaque(false);
 		pLeft.setLayout(null);
 		//--whichSideLabel
 		Font sideLabelFont = new Font("Arial", Font.BOLD, 20);
@@ -264,14 +354,32 @@ public class ChessboardView extends JFrame {
 		pLeft.add(countLabelForWhite);
 		this.add(pLeft);
 	
+		this.setResizable(false);
 		this.setVisible(true);
 		
-		this.addMouseListener(new ChessBoardListener(this));
+		this.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}
+		});
 	}
 	
 	public void gameStart() {
 		startState();
 		update();
+		if(isNeedAI && AISide == -1) {
+			int pos = rai.finalReturn(rai.transChessBoard(ChessboardView.chess));
+			int posi = (pos-1)/8;
+			int posj = (pos-1)%8;
+			chess[posi][posj] = sideState;
+			chess = rai.transChessBoard2(rai.Move(rai.transChessBoard(chess), pos, AISide));
+			try {
+	            Thread.sleep(1000);
+	        } catch (Exception exception) {
+	        }
+			update();
+		}
 	}
 	
 	public void update() {
@@ -279,6 +387,7 @@ public class ChessboardView extends JFrame {
 		whiteCount = 0;
 		canPlayerDown = false;
 		sideState = -sideState;
+		mainMenuUndo.setEnabled(true);
 		for(int i=0; i < 8; i++) {
 			for(int j=0; j < 8; j++) {
 				Graphics g = blocks[i][j].getGraphics();
@@ -297,17 +406,12 @@ public class ChessboardView extends JFrame {
 					g.fillOval(15, 15, 50, 50);
 					blackCount++;
 				} else {
-					if(canDown(i, j)) {
+					if(canDown(i, j) && AISide == -sideState) {
 						//blocks[i][j].setBackground(Color.red);
 						g.setColor(canDownBlockColor);
 						g.drawOval(15, 15, 50, 50);
 					}
 				}
-				try{
-                    Thread.sleep(2);
-                }
-                catch(Exception ex){
-                }
 			}
 		}
 
@@ -320,17 +424,15 @@ public class ChessboardView extends JFrame {
 		countLabelForBlack.setText(blackCount+ " ");
 		//over
 		if(isOver()) {
+			mainMenuUndo.setEnabled(false);
 			switch(whoWin()) {
 			case 1:
-				//JOptionPane.showInternalMessageDialog(null, "","White Win", JOptionPane.INFORMATION_MESSAGE);
 				this.winLabel.setText("White Win");
 				break;
 			case -1:
-				//JOptionPane.showInternalMessageDialog(null, "","Black Win", JOptionPane.INFORMATION_MESSAGE);
 				this.winLabel.setText("Black Win");
 				break;
 			case 0:
-				//JOptionPane.showInternalMessageDialog(null, "","Tie", JOptionPane.INFORMATION_MESSAGE);
 				this.winLabel.setText("Tie");
 				break;
 			default:
@@ -351,4 +453,47 @@ public class ChessboardView extends JFrame {
 	public static Color boardColor = new Color(216, 138, 49);
 	public static Color boardLineColor = new Color(136, 78, 65);
 	public static Color canDownBlockColor = new Color(253, 255, 197);
+	public static Icon authorIcon = new ImageIcon("./src/authorIcon.jpg");
+	public static ImageIcon background = new ImageIcon("./src/background.jpg");
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		JMenuItem item = (JMenuItem)e.getSource();
+		if(item == mainMenuQuit) {
+			System.exit(0);
+		} else if(item == mainMenuRestart) {
+			clear();
+			winLabel.setText("");
+			gameStart();
+		} else if(item == mainMenuUndo) {
+			int[][] chesst = chessboardListener.getPreState();
+			for(int i=0; i<8; i++) {
+				for(int j=0; j<8; j++) {
+					chess[i][j] = chesst[i][j];
+				}
+			}
+			sideState = -sideState;
+			update();
+			mainMenuUndo.setEnabled(false);
+		} else if(item == mainMenuStartWithPeople) {
+			isNeedAI = false;
+			setGameState(1);
+		} else {
+			isNeedAI = true;
+			String[] possibleValues = { "offensive", "defensive"}; 
+			String selectedValue = (String) JOptionPane.showInputDialog(null, "Choose one", "", JOptionPane.INFORMATION_MESSAGE, null, possibleValues, possibleValues[0]);
+			if(selectedValue == "offensive") {
+				AISide = 1;
+			} else {
+				AISide = -1;
+			}
+			
+			if(item == mainMenuStartWithAIEasy) {
+				setGameState(1);
+			} else if(item == mainMenuStartWithAINormal) {
+				setGameState(3);
+			} else if(item == mainMenuStartWithAIHard) {
+				setGameState(5);
+			}
+		}
+	}
 }

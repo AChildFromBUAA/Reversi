@@ -3,6 +3,9 @@ import java.awt.event.*;
 public class ChessBoardListener extends MouseAdapter {
 	
 	private ChessboardView cbv;
+	private Boolean needAI;
+	private ReversiAI r;
+	private int[][][] preState;
 	
 	private Boolean isInboard(int x, int y) {
 		if(x <= ChessboardView.boardX + ChessboardView.boardWidth) {
@@ -93,9 +96,32 @@ public class ChessBoardListener extends MouseAdapter {
 		}
 	}
 	
-	public ChessBoardListener(ChessboardView cbv) {
+	public ChessBoardListener() {
+		preState = new int[3][8][8];
+	}
+	
+	public ChessBoardListener(ChessboardView cbv, Boolean needAI, ReversiAI r) {
 		// TODO Auto-generated constructor stub
 		this.cbv = cbv;
+		this.needAI = needAI;
+		this.r = r;
+		preState = new int[3][8][8];
+	}
+	
+	public int[][] getPreState() {
+		return preState[ChessboardView.sideState+1];
+	}
+	
+	public void setChessboardView(ChessboardView cbv) {
+		this.cbv = cbv;
+	}
+	
+	public void setNeedAI(Boolean needAI) {
+		this.needAI = needAI;
+	}
+	
+	public void setReversiAI(ReversiAI r) {
+		this.r = r;
 	}
 	
 	public void mouseClicked(MouseEvent e) {
@@ -105,9 +131,28 @@ public class ChessBoardListener extends MouseAdapter {
 			int j = (xpos - ChessboardView.boardX)*8 / ChessboardView.boardWidth;
 			int i = (ypos - ChessboardView.boardY)*8 / ChessboardView.boardHeight;
 			if(ChessboardView.chess[i][j] == 0 && cbv.canDown(i, j)) {
+				for(int m=0; m<8; m++) {
+					for(int n=0; n<8; n++) {
+						preState[ChessboardView.sideState+1][m][n] = ChessboardView.chess[m][n];
+					}
+				}
 				ChessboardView.chess[i][j] = ChessboardView.sideState;
 				changeColor(i,j);
 				cbv.update();
+				if(needAI) {
+					int pos = r.finalReturn(r.transChessBoard(ChessboardView.chess));
+					int posi = (pos-1)/8;
+					int posj = (pos-1)%8;
+					ChessboardView.chess[posi][posj] = ChessboardView.sideState;
+					changeColor(posi,posj);
+					if(r.getSearchDep() < 4) {
+						try {
+							Thread.sleep(1000);
+						} catch (Exception exception) {
+						}
+					}
+					cbv.update();
+				}
 			}
 		}
 	}
