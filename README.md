@@ -18,7 +18,7 @@ Easy: think 1 step; Normal: think 3 steps; Hard: think 5 steps.
 
 ## How to play it
 
-If you don't know how to play it, you ccan click [here](https://en.wikipedia.org/wiki/Reversi)
+If you don't know how to play it, you can click [here](https://en.wikipedia.org/wiki/Reversi)
 
 ## Instructions
 * It's a java project.
