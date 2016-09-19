@@ -4,7 +4,6 @@ This is a simple game, I made it for my java homework.
 
 ## About AI
 
-This AI algorithm is made by CraZYuan.
 
 黑白棋AI的算法设计采用的是对棋盘分值和行动力的计算相结合并取优的贪心方法来进行计算，对可落子点进行之后若干步落子模拟，从中寻找最优解；根据落子模拟的搜索步数不同决定AI难度。
 
