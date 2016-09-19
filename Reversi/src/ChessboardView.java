@@ -284,7 +284,7 @@ public class ChessboardView extends JFrame implements ActionListener {
 		aboutAuthor.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				 JOptionPane.showMessageDialog(null,"KYZ & CraZYuan\n@ 2015-2016 all rights reserved.", "about Author", JOptionPane.INFORMATION_MESSAGE, authorIcon);
+				 JOptionPane.showMessageDialog(null,"KYZ@ 2015-2016 all rights reserved.", "about Author", JOptionPane.INFORMATION_MESSAGE, authorIcon);
 			}
 		});
 		aboutMenu.add(aboutAuthor);
